@@ -2,13 +2,44 @@
 
 import os
 import sys
-import tqdm
 import shutil
+import random
 import importlib
+import numpy as np
 from typing import List, Dict, Union
 from omegaconf import OmegaConf, DictConfig
 
+import torch
+import torch.nn as nn
+
 from .misc import get_time_str, query_yes_no
+
+
+def set_seed(seed: int, deterministic: bool = False):
+    """Set random seed."""
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    if deterministic:
+        torch.use_deterministic_algorithms(True)
+
+
+def discard_label(x):
+    """Discard the label from a data batch."""
+    return x[0] if isinstance(x, (list, tuple)) else x
+
+
+def toggle_off_gradients(model: nn.Module):
+    """Disable gradients update for a model."""
+    for param in model.parameters():
+        param.requires_grad = False
+
+
+def toggle_on_gradients(model: nn.Module):
+    """Enable gradients update for a model."""
+    for param in model.parameters():
+        param.requires_grad = True
 
 
 def create_exp_dir(
@@ -119,13 +150,3 @@ def find_resume_checkpoint(exp_dir: str, resume: str):
         raise ValueError(f'resume option {resume} is invalid')
     assert os.path.isdir(ckpt_path), f'{ckpt_path} is not a directory'
     return ckpt_path
-
-
-def get_dataloader_iterator(dataloader, tqdm_kwargs):
-    while True:
-        for batch in tqdm.tqdm(dataloader, **tqdm_kwargs):
-            yield batch
-
-
-def discard_label(x):
-    return x[0] if isinstance(x, (list, tuple)) else x

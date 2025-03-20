@@ -1,7 +1,8 @@
 """Miscellaneous utility functions."""
 
-import datetime
 import sys
+import datetime
+from torch import Tensor
 
 
 def check_freq(freq: int, step: int):
@@ -26,6 +27,11 @@ def amortize(N: int, n: int):
     """
     k, r = N // n, N % n
     return k * [n] if r == 0 else k * [n] + [r]
+
+
+def expand_dims(x: Tensor, ndim: int):
+    assert ndim >= x.ndim
+    return x.view(*x.shape, *(1,) * (ndim - x.ndim))
 
 
 def query_yes_no(question: str, default: str = "yes"):
